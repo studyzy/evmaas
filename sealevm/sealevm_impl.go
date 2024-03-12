@@ -36,14 +36,14 @@ func (vm *SealEVMImpl) newEVMParam(tx evmaas.Transaction, ms storage.IExternalSt
 				Timestamp:  evmInt256.New(int64(block.Timestamp)),
 				Number:     evmInt256.New(int64(block.Number)),
 				Difficulty: evmInt256.New(0),
-				GasLimit:   evmInt256.New(10000000),
+				GasLimit:   evmInt256.New(int64(block.GasLimit)),
 				Hash:       blockHashInt,
 			},
 			//Contract: contract,
 			Transaction: environment.Transaction{
 				Origin:   callerInt,
 				GasPrice: evmInt256.New(1),
-				GasLimit: evmInt256.New(10000000),
+				GasLimit: evmInt256.New(int64(tx.Gas)),
 			},
 			Message: environment.Message{
 				Caller: callerInt,

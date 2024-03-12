@@ -15,7 +15,7 @@ func TestCase1(t *testing.T) {
 	Case1()
 }
 
-func TestErc20(t *testing.T) {
+func TestDirectErc20(t *testing.T) {
 	//load SealEVM module
 	SealEVM.Load()
 
