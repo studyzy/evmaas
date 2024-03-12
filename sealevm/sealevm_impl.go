@@ -1,7 +1,6 @@
 package sealevm
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/SealSC/SealEVM"
@@ -12,14 +11,14 @@ import (
 )
 
 type SealEVMImpl struct {
-	statedb evmaas.StateDB
+	//statedb evmaas.StateDB
 }
 
 func NewSealEVMImpl() *SealEVMImpl {
 	SealEVM.Load()
-	sdb := evmaas.NewMemStateDB()
+	//sdb := evmaas.NewMemStateDB()
 
-	return &SealEVMImpl{statedb: sdb}
+	return &SealEVMImpl{}
 }
 
 // create a new evm
@@ -110,27 +109,19 @@ func (vm *SealEVMImpl) InstallContract(tx evmaas.Transaction, stateDB evmaas.Sta
 				Data:            l.Data,
 			}
 			result.Events = append(result.Events, eventLog)
-			for _, t := range l.Topics {
-				fmt.Printf("topic:%x\n", t)
-			}
-			fmt.Printf("data :%x\n", l.Data)
 		}
 	}
-
+	result.Success = true
+	result.GasUsed = ret.GasLeft
+	result.ReturnData = ret.ResultData
 	//返回执行结果
-	return &evmaas.ExecutionResult{
-		Success:      true,
-		ReturnData:   ret.ResultData,
-		StateChanges: nil,
-		GasUsed:      ret.GasLeft,
-		Events:       nil,
-	}, nil
+	return result, nil
 
 }
 func (vm *SealEVMImpl) ExecuteContract(tx evmaas.Transaction, stateDB evmaas.StateDB, block evmaas.Block) (
 	*evmaas.ExecutionResult, error) {
 	contractAddr := tx.To
-	contractCode, err := vm.statedb.GetContractCode(contractAddr)
+	contractCode, err := stateDB.GetContractCode(contractAddr)
 	if err != nil {
 		return nil, err
 
@@ -182,20 +173,13 @@ func (vm *SealEVMImpl) ExecuteContract(tx evmaas.Transaction, stateDB evmaas.Sta
 				Data:            l.Data,
 			}
 			result.Events = append(result.Events, eventLog)
-			for _, t := range l.Topics {
-				fmt.Printf("topic:%x\n", t)
-			}
-			fmt.Printf("data :%x\n", l.Data)
+
 		}
 	}
-
+	result.Success = true
+	result.GasUsed = ret.GasLeft
+	result.ReturnData = ret.ResultData
 	//返回执行结果
-	return &evmaas.ExecutionResult{
-		Success:      true,
-		ReturnData:   ret.ResultData,
-		StateChanges: nil,
-		GasUsed:      ret.GasLeft,
-		Events:       nil,
-	}, nil
+	return result, nil
 
 }

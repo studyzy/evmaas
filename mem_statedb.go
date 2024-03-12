@@ -1,6 +1,9 @@
 package evmaas
 
-import "math/big"
+import (
+	"log"
+	"math/big"
+)
 
 type MemStateDB struct {
 	AccountBalance   map[Address]*big.Int
@@ -39,6 +42,10 @@ func (m *MemStateDB) GetState(address Address, key []byte) ([]byte, error) {
 }
 
 func (m *MemStateDB) PutState(address Address, key []byte, value []byte) {
+	log.Printf("PutState: addr[%x],key[%x]=value[%x]\n", address, key, value)
+	if m.StateMap[address] == nil {
+		m.StateMap[address] = make(map[string][]byte)
+	}
 	m.StateMap[address][string(key)] = value
 }
 

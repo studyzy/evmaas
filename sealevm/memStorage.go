@@ -114,7 +114,7 @@ func (r *memStorage) Load(n string, k string) (*evmInt256.Int, error) {
 	ret := evmInt256.New(0)
 	//addr := evmaas.NewAddress(n)
 	val, err := r.getState([]byte(n), []byte(k))
-	if err != nil {
+	if err != nil || len(val) == 0 {
 		log.Printf("query statedb: %x[%x] but not found\n", n, k)
 	}
 
