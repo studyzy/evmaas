@@ -1,4 +1,4 @@
-package sealevm
+package polygon
 
 import (
 	"encoding/hex"
@@ -7,27 +7,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/studyzy/evmaas"
 )
 
-func TestSealEvmImpl_Erc20(t *testing.T) {
-	impl := NewSealEVMImpl()
+func TestInstallContract(t *testing.T) {
+	//https://sepolia.etherscan.io/tx/0xa64ba1b6999ad5fd5752dd84b4979785a10e9e4033e0759a53af3680791c9af3
 
-	//create memStorage
-	db := evmaas.NewMemStateDB()
-
-	// deployCode is for deploy the contract.sol
 	bin, _ := os.ReadFile("../testdata/erc20/erc20.bin")
 	var deployCode, _ = hex.DecodeString(string(bin))
-
+	//create memStorage
+	db := evmaas.NewMemStateDB()
 	fmt.Println("安装合约")
-	var userA, _ = hex.DecodeString("ab108fc6c3850e01cee01e419d07f097186c3982")
+	impl := &PolygonImpl{}
+	var userA, _ = hex.DecodeString("c3b4d19da33e3934c9e5383d9e38bccd591e2287")
 	var userB, _ = hex.DecodeString("ce2355fcfcb26414a254f28404c6040d0d4559c2")
 	tx := evmaas.Transaction{
 		TxHash:   userA,
-		From:     evmaas.NewAddress("ab108fc6c3850e01cee01e419d07f097186c3982"),
+		From:     evmaas.BytesToAddress(userA),
 		To:       evmaas.Address{},
 		Value:    nil,
 		Gas:      1000000,
@@ -42,7 +39,6 @@ func TestSealEvmImpl_Erc20(t *testing.T) {
 		GasLimit:   1000000,
 	}
 	//deploy contract
-
 	ret, err := impl.InstallContract(tx, db, block)
 
 	//check error
@@ -50,6 +46,8 @@ func TestSealEvmImpl_Erc20(t *testing.T) {
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}
+	//Gas花费：550,207
+
 	//store the result to ms
 	printResult(ret)
 	var contractAddr string
@@ -64,7 +62,6 @@ func TestSealEvmImpl_Erc20(t *testing.T) {
 			db.PutState(contract, []byte(k), v)
 		}
 	}
-
 	//查询A的余额
 	fmt.Println("查询A的余额")
 	var userABalance, _ = hex.DecodeString("70a08231000000000000000000000000ab108fc6c3850e01cee01e419d07f097186c3982")
@@ -127,6 +124,7 @@ func TestSealEvmImpl_Erc20(t *testing.T) {
 	require.Equal(t, "0000000000000000000000000000000000000000033b2e3c9fd0803ce7ffff9c", hex.EncodeToString(ret.ReturnData))
 
 }
+
 func logPrint(result *evmaas.ExecutionResult) {
 	for _, log := range result.Events {
 		fmt.Printf("ContractAddress:%x\n", log.ContractAddress)
@@ -137,7 +135,6 @@ func logPrint(result *evmaas.ExecutionResult) {
 		//fmt.Println("data as string:", string(l.Data))
 	}
 }
-
 func printResult(result *evmaas.ExecutionResult) {
 	fmt.Println("Success:", result.Success)
 	fmt.Println("ReturnData:", hex.EncodeToString(result.ReturnData))
@@ -146,40 +143,4 @@ func printResult(result *evmaas.ExecutionResult) {
 	fmt.Println("ContractCode:", result.ContractCode)
 	fmt.Println("GasUsed:", result.GasUsed)
 	logPrint(result)
-}
-
-func TestSealEvmImpl_OutofGas(t *testing.T) {
-	impl := NewSealEVMImpl()
-
-	//create memStorage
-	db := evmaas.NewMemStateDB()
-
-	// deployCode is for deploy the contract.sol
-	bin, _ := os.ReadFile("../testdata/erc20/erc20.bin")
-	var deployCode, _ = hex.DecodeString(string(bin))
-
-	fmt.Println("安装合约")
-	var userA, _ = hex.DecodeString("ab108fc6c3850e01cee01e419d07f097186c3982")
-	var userB, _ = hex.DecodeString("ce2355fcfcb26414a254f28404c6040d0d4559c2")
-	tx := evmaas.Transaction{
-		TxHash:   userA,
-		From:     evmaas.NewAddress("ab108fc6c3850e01cee01e419d07f097186c3982"),
-		To:       evmaas.Address{},
-		Value:    nil,
-		Gas:      10,
-		GasPrice: nil,
-		Data:     deployCode,
-	}
-	block := evmaas.Block{
-		BlockHash:  userB,
-		Number:     100,
-		Timestamp:  uint64(time.Now().Unix()),
-		Difficulty: nil,
-		GasLimit:   10,
-	}
-	//deploy contract
-
-	_, err := impl.InstallContract(tx, db, block)
-	assert.Error(t, err)
-	fmt.Println(err.Error())
 }

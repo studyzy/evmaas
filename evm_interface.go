@@ -19,9 +19,15 @@ func NewAddress(addr string) Address {
 	return address
 }
 func BytesToAddress(b []byte) Address {
-	var address Address
-	copy(address[:], b)
-	return address
+	var a Address
+
+	size := len(b)
+	min := min(size, 20)
+
+	copy(a[20-min:], b[len(b)-min:])
+
+	return a
+
 }
 
 // StateDB 接口定义了状态数据库的读取和更新方法。
