@@ -2,6 +2,7 @@ package evmaas
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"strings"
 )
@@ -16,6 +17,17 @@ func NewAddress(addr string) Address {
 	var address Address
 	copy(address[:], addrBytes)
 	return address
+}
+func BytesToAddress(b []byte) Address {
+	var a Address
+
+	size := len(b)
+	min := min(size, 20)
+
+	copy(a[20-min:], b[len(b)-min:])
+
+	return a
+
 }
 
 // StateDB 接口定义了状态数据库的读取和更新方法。
@@ -54,16 +66,32 @@ type Block struct {
 type ExecutionResult struct {
 	Success      bool
 	ReturnData   []byte
-	StateChanges map[Address]map[string]interface{}
+	StateChanges map[Address]map[string][]byte
 	Balance      map[Address]*big.Int
 	ContractCode map[Address][]byte
 	GasUsed      uint64
 	Events       []EventLog
 }
 
+func (result *ExecutionResult) Receipt() *Receipt {
+	return &Receipt{
+		Success:    result.Success,
+		ReturnData: result.ReturnData,
+		GasUsed:    result.GasUsed,
+		Events:     result.Events,
+	}
+}
+
+type Receipt struct {
+	Success    bool
+	ReturnData []byte
+	GasUsed    uint64
+	Events     []EventLog
+}
+
 func (result *ExecutionResult) PutState(address Address, key []byte, value []byte) {
 	if result.StateChanges[address] == nil {
-		result.StateChanges[address] = make(map[string]interface{})
+		result.StateChanges[address] = make(map[string][]byte)
 	}
 	result.StateChanges[address][string(key)] = value
 
@@ -71,7 +99,7 @@ func (result *ExecutionResult) PutState(address Address, key []byte, value []byt
 
 func NewExecutionResult() *ExecutionResult {
 	return &ExecutionResult{
-		StateChanges: make(map[Address]map[string]interface{}),
+		StateChanges: make(map[Address]map[string][]byte),
 		Balance:      make(map[Address]*big.Int),
 		ContractCode: make(map[Address][]byte),
 	}
@@ -82,6 +110,21 @@ type EventLog struct {
 	ContractAddress Address
 	Topics          [][]byte
 	Data            []byte
+}
+
+func (r *Receipt) ToString() string {
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf("Success:%v\n", r.Success))
+	sb.WriteString(fmt.Sprintf("ReturnData:%x\n", r.ReturnData))
+	sb.WriteString(fmt.Sprintf("GasUsed:%v\n", r.GasUsed))
+	sb.WriteString("Events:\n")
+	for i, e := range r.Events {
+		sb.WriteString(fmt.Sprintf("Event[%d]:\n", i))
+		sb.WriteString(fmt.Sprintf("\tContractAddress:%x\n", e.ContractAddress))
+		sb.WriteString(fmt.Sprintf("\tTopics:%x\n", e.Topics))
+		sb.WriteString(fmt.Sprintf("\tData:%x\n", e.Data))
+	}
+	return sb.String()
 }
 
 type EvmInterface interface {

@@ -3,6 +3,7 @@ package evmaas
 import (
 	"math/big"
 
+	"github.com/0xPolygon/polygon-edge/types"
 	"github.com/SealSC/SealEVM/evmInt256"
 	"golang.org/x/crypto/sha3"
 )
@@ -23,4 +24,16 @@ func BytesToInt(data []byte) *evmInt256.Int {
 	i.SetBytes(data)
 	bigInt := evmInt256.FromBigInt(&i)
 	return bigInt
+}
+func GetContractAddr(txHash []byte) Address {
+	return Address(txHash[12:32])
+}
+
+func DecodeTx(txData []byte) (*types.Transaction, error) {
+	tx := types.Transaction{}
+	err := tx.UnmarshalRLP(txData)
+	if err != nil {
+		return nil, err
+	}
+	return &tx, nil
 }

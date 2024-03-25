@@ -162,7 +162,13 @@ func (vm *SealEVMImpl) ExecuteContract(tx evmaas.Transaction, stateDB evmaas.Sta
 		}
 	}
 	//保存Balance
-	//TODO
+	for _, ab := range ret.StorageCache.Balance {
+		result.Balance[evmaas.Address(ab.Address.Bytes())] = ab.Balance.Int
+	}
+	//保存删除的合约
+	for addr := range ret.StorageCache.Destructs {
+		result.ContractCode[evmaas.NewAddress(addr)] = nil
+	}
 	//保存Logs
 	for _, logs := range ret.StorageCache.Logs {
 		for _, l := range logs {
