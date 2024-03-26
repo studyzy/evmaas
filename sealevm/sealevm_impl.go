@@ -189,3 +189,8 @@ func (vm *SealEVMImpl) ExecuteContract(tx evmaas.Transaction, stateDB evmaas.Sta
 	return result, nil
 
 }
+
+func (v *SealEVMImpl) QueryContract(tx evmaas.Transaction, stateDB evmaas.StateDB, block evmaas.Block) (
+	*evmaas.ExecutionResult, error) {
+	return v.ExecuteContract(tx, stateDB, block)
+}

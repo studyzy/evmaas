@@ -130,4 +130,5 @@ func (r *Receipt) ToString() string {
 type EvmInterface interface {
 	InstallContract(tx Transaction, stateDB StateDB, block Block) (*ExecutionResult, error)
 	ExecuteContract(tx Transaction, stateDB StateDB, block Block) (*ExecutionResult, error)
+	QueryContract(tx Transaction, stateDB StateDB, block Block) (*ExecutionResult, error)
 }

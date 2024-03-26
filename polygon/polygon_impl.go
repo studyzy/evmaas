@@ -102,3 +102,28 @@ func (v *PolygonImpl) ExecuteContract(tx evmaas.Transaction, stateDB evmaas.Stat
 	result := vm.Run(contract, host, &config)
 	return ConvertResult(result, host)
 }
+func (v *PolygonImpl) QueryContract(tx evmaas.Transaction, stateDB evmaas.StateDB, block evmaas.Block) (
+	*evmaas.ExecutionResult, error) {
+	vm := evm.NewEVM()
+	sender := types.BytesToAddress(tx.From[:])
+	to := types.BytesToAddress(tx.To[:])
+	contract := runtime.NewContract(0, sender, sender, to, tx.Value, tx.Gas, tx.Data)
+	txContext := runtime.TxContext{
+		GasPrice:     types.Hash{},
+		Origin:       sender,
+		Coinbase:     types.Address{},
+		Number:       0,
+		Timestamp:    int64(block.Timestamp),
+		GasLimit:     int64(tx.Gas),
+		ChainID:      666,
+		Difficulty:   types.Hash{},
+		Tracer:       nil,
+		NonPayable:   false,
+		BaseFee:      nil,
+		BurnContract: types.Address{},
+	}
+	host := NewMemHost(stateDB, txContext)
+	config := chain.AllForksEnabled.At(1)
+	result := vm.Run(contract, host, &config)
+	return ConvertResult(result, host)
+}

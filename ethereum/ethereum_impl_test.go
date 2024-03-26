@@ -3,10 +3,13 @@ package ethereum
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/studyzy/evmaas"
 )
@@ -14,20 +17,23 @@ import (
 func TestInstallErc20(t *testing.T) {
 
 	impl := NewEthereumImpl()
-
+	var userA, _ = hex.DecodeString("c3b4d19da33e3934c9e5383d9e38bccd591e2287")
+	addressA := evmaas.BytesToAddress(userA)
+	var userB, _ = hex.DecodeString("ce2355fcfcb26414a254f28404c6040d0d4559c2")
 	//create memStorage
 	db := evmaas.NewMemStateDB()
 
 	// deployCode is for deploy the contract.sol
 	bin, _ := os.ReadFile("../testdata/erc20/erc20.bin")
 	var deployCode, _ = hex.DecodeString(string(bin))
+	//初始化一定的账户余额
+	db.SetAccountBalance(addressA, big.NewInt(math.MaxInt64))
 
 	fmt.Println("安装合约")
-	var userA, _ = hex.DecodeString("ab108fc6c3850e01cee01e419d07f097186c3982")
-	var userB, _ = hex.DecodeString("ce2355fcfcb26414a254f28404c6040d0d4559c2")
+
 	tx := evmaas.Transaction{
 		TxHash:   userA,
-		From:     evmaas.NewAddress("ab108fc6c3850e01cee01e419d07f097186c3982"),
+		From:     addressA,
 		To:       evmaas.Address{},
 		Value:    nil,
 		Gas:      1000000,
@@ -50,6 +56,7 @@ func TestInstallErc20(t *testing.T) {
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}
+
 	//store the result to ms
 	printResult(ret)
 	var contractAddr string
@@ -58,28 +65,30 @@ func TestInstallErc20(t *testing.T) {
 		contractAddr = hex.EncodeToString(contractAddrK[:])
 		db.SetContractCode(evmaas.NewAddress(contractAddr), code)
 	}
+	assert.Equal(t, "53d19b414a839c5589c59ca28a1c79d69d39efb2", contractAddr)
 	//保存状态数据
 	for contract, kv := range ret.StateChanges {
 		for k, v := range kv {
 			db.PutState(contract, []byte(k), v)
 		}
 	}
-	return
+
 	//查询A的余额
 	fmt.Println("查询A的余额")
-	var userABalance, _ = hex.DecodeString("70a08231000000000000000000000000ab108fc6c3850e01cee01e419d07f097186c3982")
+	var userABalance, _ = hex.DecodeString("70a08231000000000000000000000000" + hex.EncodeToString(userA))
 	tx = evmaas.Transaction{
 		TxHash:   userA,
-		From:     evmaas.NewAddress("ab108fc6c3850e01cee01e419d07f097186c3982"),
+		From:     addressA,
 		To:       evmaas.NewAddress(contractAddr),
 		Value:    nil,
 		Gas:      100000,
 		GasPrice: nil,
 		Data:     userABalance,
 	}
-	ret, err = impl.ExecuteContract(tx, db, block)
+	ret, err = impl.QueryContract(tx, db, block)
 	if err != nil {
 		fmt.Println(err.Error())
+		os.Exit(0)
 	}
 
 	fmt.Println("balance: ", hex.EncodeToString(ret.ReturnData))
@@ -88,7 +97,7 @@ func TestInstallErc20(t *testing.T) {
 	var transfer, _ = hex.DecodeString("a9059cbb000000000000000000000000ce2355fcfcb26414a254f28404c6040d0d4559c20000000000000000000000000000000000000000000000000000000000000064")
 	tx = evmaas.Transaction{
 		TxHash:   userA,
-		From:     evmaas.NewAddress("ab108fc6c3850e01cee01e419d07f097186c3982"),
+		From:     addressA,
 		To:       evmaas.NewAddress(contractAddr),
 		Value:    nil,
 		Gas:      100000,
@@ -111,14 +120,14 @@ func TestInstallErc20(t *testing.T) {
 	fmt.Println("查询A的余额")
 	tx = evmaas.Transaction{
 		TxHash:   userA,
-		From:     evmaas.NewAddress("ab108fc6c3850e01cee01e419d07f097186c3982"),
+		From:     addressA,
 		To:       evmaas.NewAddress(contractAddr),
 		Value:    nil,
 		Gas:      100000,
 		GasPrice: nil,
 		Data:     userABalance,
 	}
-	ret, err = impl.ExecuteContract(tx, db, block)
+	ret, err = impl.QueryContract(tx, db, block)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -129,7 +138,7 @@ func TestInstallErc20(t *testing.T) {
 }
 func logPrint(result *evmaas.ExecutionResult) {
 	for _, log := range result.Events {
-
+		fmt.Printf("Contract:%x\n", log.ContractAddress)
 		for _, t := range log.Topics {
 			fmt.Printf("topic:%x\n", t)
 		}
