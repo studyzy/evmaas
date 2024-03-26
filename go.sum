@@ -615,8 +615,8 @@ github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 h1:q0rUy8C/TYNBQS1+CGKw68tLOF
 github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1/go.mod h1:7SFka0XMvUgj3hfZtydOrQY2mwhPclbT2snogU7SQQc=
 github.com/bwesterb/go-ristretto v1.2.0 h1:xxWOVbN5m8NNKiSDZXE1jtZvZnC6JSJ9cYFADiZcWtw=
 github.com/bwesterb/go-ristretto v1.2.0/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
-github.com/bxelab/go-ethereum v0.0.0-20240325172037-b3e1bbebce2d h1:v9oOzrfvb92innoqUZoqY/ZIciMcKr18qUdL28a71Qs=
-github.com/bxelab/go-ethereum v0.0.0-20240325172037-b3e1bbebce2d/go.mod h1:x2gtBG0WHLgY08FE97lfhjtpcR5vcSAZbi34JnrsBbQ=
+github.com/bxelab/go-ethereum v0.0.0-20240326084812-e5e890eccd5d h1:z9HsBuPcaKPo5o0U43hjz1atboKm9W1LHRTFqiVUR20=
+github.com/bxelab/go-ethereum v0.0.0-20240326084812-e5e890eccd5d/go.mod h1:x2gtBG0WHLgY08FE97lfhjtpcR5vcSAZbi34JnrsBbQ=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

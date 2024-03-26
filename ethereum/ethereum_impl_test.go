@@ -24,7 +24,7 @@ func TestInstallErc20(t *testing.T) {
 	db := evmaas.NewMemStateDB()
 
 	// deployCode is for deploy the contract.sol
-	bin, _ := os.ReadFile("../testdata/erc20/erc20.bin")
+	bin, _ := os.ReadFile("./testdata/erc20.bin")
 	var deployCode, _ = hex.DecodeString(string(bin))
 	//初始化一定的账户余额
 	db.SetAccountBalance(addressA, big.NewInt(math.MaxInt64))

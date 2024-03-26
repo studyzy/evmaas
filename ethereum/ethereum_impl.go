@@ -3,13 +3,13 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	cmath "github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/studyzy/evmaas"
 )
 
@@ -30,8 +30,9 @@ func (v *EthereumImpl) InstallContract(tx evmaas.Transaction, stateDB evmaas.Sta
 		Difficulty: big.NewInt(0),
 		Number:     big.NewInt(int64(block.Number)),
 		BaseFee:    baseFee,
+		Time:       uint64(time.Now().Unix()),
 	}
-	chainConfig := params.TestChainConfig
+	chainConfig := TestChainConfig
 	cfg := vm.Config{}
 	author := &common.Address{}
 	var (
@@ -46,33 +47,39 @@ func (v *EthereumImpl) InstallContract(tx evmaas.Transaction, stateDB evmaas.Sta
 	}
 	//statedb.SetTxContext(tx.Hash(), i)
 	var gp = new(core.GasPool).AddGas(block.GasLimit)
-	blockNumber := big.NewInt(int64(block.Number))
-	blockHash := common.BytesToHash(block.BlockHash)
-	usedGas := new(uint64)
-	receipt, err := core.ApplyTransactionWithEVM(msg, chainConfig, gp, statedb, blockNumber, blockHash, etx, usedGas, vmenv)
+	//blockNumber := big.NewInt(int64(block.Number))
+	//blockHash := common.BytesToHash(block.BlockHash)
+	//usedGas := new(uint64)
+
+	// Create a new context to be used in the EVM environment.
+	txContext := core.NewEVMTxContext(msg)
+	vmenv.Reset(txContext, statedb)
+
+	// Apply the transaction to the current state (included in the env).
+	result, err := core.ApplyMessage(vmenv, msg, gp)
 	if err != nil {
-		return nil, fmt.Errorf("could not apply tx [%v]: %w", etx.Hash().Hex(), err)
+		return nil, err
 	}
 
-	return convertReceipt2Result(receipt, statedb)
+	return convertReceipt2Result(result, statedb)
 }
 
-func convertReceipt2Result(res *types.Receipt, statedb *StateDb) (*evmaas.ExecutionResult, error) {
-	if res.Status != types.ReceiptStatusSuccessful {
-		return nil, fmt.Errorf("contract execution failed")
+func convertReceipt2Result(res *core.ExecutionResult, statedb *StateDb) (*evmaas.ExecutionResult, error) {
+	if res.Err != nil {
+		return nil, res.Err
 	}
 
 	result := &evmaas.ExecutionResult{
-		Success:      res.Status == types.ReceiptStatusSuccessful,
-		ReturnData:   res.PostState,
+		Success:      true,
+		ReturnData:   res.ReturnData,
 		StateChanges: make(map[evmaas.Address]map[string][]byte),
 		Balance:      make(map[evmaas.Address]*big.Int),
 		Events:       make([]evmaas.EventLog, 0),
 		ContractCode: make(map[evmaas.Address][]byte),
-		GasUsed:      res.GasUsed,
+		GasUsed:      res.UsedGas,
 	}
 	//log
-	for _, log := range res.Logs {
+	for _, log := range statedb.logs {
 		ev := evmaas.EventLog{
 			ContractAddress: evmaas.BytesToAddress(log.Address[:]),
 			Topics:          make([][]byte, 0),
@@ -114,8 +121,9 @@ func (v *EthereumImpl) ExecuteContract(tx evmaas.Transaction, stateDB evmaas.Sta
 		Difficulty: big.NewInt(0),
 		Number:     big.NewInt(int64(block.Number)),
 		BaseFee:    baseFee,
+		Time:       uint64(time.Now().Unix()),
 	}
-	chainConfig := params.TestChainConfig
+	chainConfig := TestChainConfig
 	cfg := vm.Config{}
 	author := &common.Address{}
 	var (
@@ -130,15 +138,22 @@ func (v *EthereumImpl) ExecuteContract(tx evmaas.Transaction, stateDB evmaas.Sta
 	}
 	//statedb.SetTxContext(tx.Hash(), i)
 	var gp = new(core.GasPool).AddGas(block.GasLimit)
-	blockNumber := big.NewInt(int64(block.Number))
-	blockHash := common.BytesToHash(block.BlockHash)
-	usedGas := new(uint64)
-	receipt, err := core.ApplyTransactionWithEVM(msg, chainConfig, gp, statedb, blockNumber, blockHash, etx, usedGas, vmenv)
-	if err != nil {
-		return nil, fmt.Errorf("could not apply tx [%v]: %w", etx.Hash().Hex(), err)
-	}
+	//blockNumber := big.NewInt(int64(block.Number))
+	//blockHash := common.BytesToHash(block.BlockHash)
+	//usedGas := new(uint64)
+	//receipt, err := core.ApplyTransactionWithEVM(msg, chainConfig, gp, statedb, blockNumber, blockHash, etx, usedGas, vmenv)
+	//if err != nil {
+	//	return nil, fmt.Errorf("could not apply tx [%v]: %w", etx.Hash().Hex(), err)
+	//}
+	txContext := core.NewEVMTxContext(msg)
+	vmenv.Reset(txContext, statedb)
 
-	return convertReceipt2Result(receipt, statedb)
+	// Apply the transaction to the current state (included in the env).
+	result, err := core.ApplyMessage(vmenv, msg, gp)
+	if err != nil {
+		return nil, err
+	}
+	return convertReceipt2Result(result, statedb)
 }
 
 func (v *EthereumImpl) QueryContract(tx evmaas.Transaction, stateDB evmaas.StateDB, block evmaas.Block) (
@@ -149,8 +164,9 @@ func (v *EthereumImpl) QueryContract(tx evmaas.Transaction, stateDB evmaas.State
 		Difficulty: big.NewInt(0),
 		Number:     big.NewInt(int64(block.Number)),
 		BaseFee:    baseFee,
+		Time:       uint64(time.Now().Unix()),
 	}
-	chainConfig := params.TestChainConfig
+	chainConfig := TestChainConfig
 	cfg := vm.Config{}
 	author := &common.Address{}
 	var (
